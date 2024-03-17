@@ -1,7 +1,6 @@
 ---
 layout: post
 title: "Building cluster with slurm on ubuntu (20.04.1)"
-permalink: "slurm"
 categories: [HPC]
 tags: ["HPC", "cluster", "slurm"]     # TAG names should always be lowercase
 ---
