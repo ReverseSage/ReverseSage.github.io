@@ -40,7 +40,7 @@ If you do not already have hardware, here are some considerations:
 
 Top-of-the-line commodity motherboards can handle up to 4 GPUs.  You should pay attention to PCI Lanes in the motherboard and CPU specifications.  Usually GPUs can take up to 16 PCI Lanes, and work fastest for data transfer when using all 16 lanes.  To use 4 GPUs in one machine, your motherboard should support at least 64 PCI Lanes, and CPUs should have at least 64 Lanes available.  M.2 SSDs can use PCI lanes as well, so it can be better to have a little more than 64 Lanes if possible.  The motherboard and CPU specs usually detail the PCI lanes.
 
-We used NVIDIA GPU cards in our cluster, but many AMD cards [should now work]([https://rocm.github.io/](https://rocmdocs.amd.com/en/latest/)) with Python deep learning libraries now.
+We used NVIDIA GPU cards in our cluster, but many AMD cards [should now work](https://rocmdocs.amd.com/en/latest/) with Python deep learning libraries now.
 
 Power supply wattage is also important to consider, as GPUs can take a lot of Watts at peak power.
 
@@ -504,7 +504,7 @@ Adding users can be done with Linux tools and SLURM commands.  It’s best to cr
 
 `sudo groupadd normal`
 
-[Here is an example script](create_users.sh) to add users from a csv file.  There is also a [script for deleting users](delete_users.sh).
+[Here is an example script](create_users.sh) to add users from a csv file.  There is also a [script for deleting users](https://github.com/ReverseSage/Slurm-ubuntu-20.04.1/blob/master/delete_users.sh).
 
 We are adding users within the FreeIPA system, within the SLURM system, and creating a home directory.  The user is set to expire a little over a year from creation, and the password is set to expire upon the first login (prompting the user to change their password).
 
@@ -536,7 +536,7 @@ The new users don’t seem to always show up until they have saved something on 
 
 
 ## Deleting SLURM users on expiration
-The slurm account manager has no way to set an expiration for users.  So we use [this script](check_if_user_expired.sh) to check if the Linux username has expired, and if so, we delete the slurm username and home directory.  This runs on a cronjob once per day.  At it to the crontab file with:
+The slurm account manager has no way to set an expiration for users.  So we use [this script](https://github.com/ReverseSage/Slurm-ubuntu-20.04.1/blob/master/check_if_user_expired.sh) to check if the Linux username has expired, and if so, we delete the slurm username and home directory.  This runs on a cronjob once per day.  At it to the crontab file with:
 
 `sudo crontab -e`
 
