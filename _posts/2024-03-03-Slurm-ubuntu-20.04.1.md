@@ -1,12 +1,11 @@
 ---
 layout: post
-title: "slurm on ubuntu (20.04.1)"
+title: "Building cluster with slurm on ubuntu (20.04.1)"
 permalink: "slurm"
 categories: [HPC]
 tags: ["HPC", "cluster", "slurm"]     # TAG names should always be lowercase
 ---
 
-# slurm on ubuntu (20.04.1)
 Instructions for setting up a SLURM cluster using Ubuntu 20.04.1 with GPUs.  Go from a pile of hardware to a functional GPU cluster with job queueing and user management.
 
 OS used: Ubuntu 20.04.1 LTS
@@ -65,19 +64,19 @@ sudo ufw disable
 ```  
 Now we will sync time on our cluster nodes.  
 you need `ntp` package
-```
+```bash
   sudo apt install ntp
   sudo dpkg-reconfigure tzdata
   
 ```
  a GUI will open then choose `UTC` timezone.
  Next we need to add the following lines 
- ```
+ ```bash
   server 127.127.1.0
   fudge 127.127.1.0 stratum 10
  ```
   to the file `/etc/ntp.conf` then restart the service to apply.
-  ```
+  ```bash
   sudo /etc/init.d/ntp restart
   ```
 **(node)**
@@ -103,14 +102,14 @@ Immediately after installing OS’s, you want to create the munge and slurm user
 
 On all machines we need the munge authentication service and slurm installed.  First, we want to have the munge and slurm users/groups with the same UIDs and GIDs.  In my experience, these are the only GID and UIDs that need synchronization for the cluster to work.  On all machines:
 
-```
+```bash
 sudo adduser -u 1111 munge --disabled-password --gecos ""
 sudo adduser -u 1121 slurm --disabled-password --gecos ""
 ```
 
 #### You shouldn’t need to do this, but just in case, you could create the groups first, then create the users
 
-```
+```bash
 sudo addgroup -gid 1111 munge
 sudo addgroup -gid 1121 slurm
 sudo adduser -u 1111 munge --disabled-password --gecos "" -gid 1111
@@ -131,7 +130,7 @@ Once you have SSH on the machines, you may want to use a [parallel SSH utility](
 ### Install NVIDIA drivers
 You will need the latest NVIDIA drivers install for their cards.  The procedure [currently is](http://ubuntuhandbook.org/index.php/2019/04/nvidia-430-09-gtx-1650-support/):
 
-```
+```bash
 sudo add-apt-repository ppa:graphics-drivers/ppa
 sudo apt-get update
 sudo apt-get install nvidia-driver-430
@@ -139,7 +138,7 @@ sudo apt-get install nvidia-driver-430
 
 The 430 driver will probably update soon.  You can use `sudo apt-cache search nvidia-driver*` to find the latest one, or go to the "Software & Updates" menu to install it.  For some reason, on the latest install I had to use aptitude to install it:
 
-```
+```bash
 sudo apt-get install aptitude -y
 sudo aptitude install nvidia-driver-430
 ```
@@ -153,7 +152,7 @@ Anaconda makes installing deep learning libraries easier, and doesn’t require 
 
 Download the distribution file:
 
-```
+```bash
 cd /tmp
 wget https://repo.anaconda.com/archive/Anaconda3-2019.03-Linux-x86_64.sh
 ```
@@ -187,7 +186,7 @@ If you chose `no` for the `conda init` portion, you may need to add some aliases
 
 Add the lines:
 
-```
+```bash
 alias conda=~/anaconda3/bin/conda
 alias python=~/anaconda3/bin/python
 alias ipython=~/anaconda3/bin/ipython
@@ -195,7 +194,7 @@ alias ipython=~/anaconda3/bin/ipython
 
 Now install some anaconda packages:
 
-```
+```bash
 conda update conda
 conda install anaconda
 conda install python=3.6
@@ -260,7 +259,7 @@ Check the status with `sudo ufw status`.  You should see a rule to allow traffic
 ## Client nodes
 Now we can set up the clients.  On all worker servers:
 
-```
+```bash
 sudo apt install nfs-common -y
 sudo mkdir /storage
 sudo chown admin:admin /storage
@@ -283,7 +282,7 @@ Now any files put into /storage from the master server can be seen on all worker
 
 First we need passwordless SSH between the master and compute nodes.  We are still using `master` as the master node hostname and `worker` as the worker hostname.  On the master:
 
-```
+```bash
 ssh-keygen
 ssh-copy-id admin@worker
 ```
@@ -291,7 +290,7 @@ ssh-copy-id admin@worker
 To do this with many worker nodes, you might want to set up a small script to loop through worker hostnames or IPs.
 
 ## Install munge on the master:
-```
+```bash
 sudo apt-get install libmunge-dev libmunge2 munge -y
 sudo systemctl enable munge
 sudo systemctl start munge
@@ -302,14 +301,14 @@ Test munge if you like:
 
 
 Copy the munge key to /storage
-```
+```bash
 sudo cp /etc/munge/munge.key /storage/
 sudo chown munge /storage/munge.key
 sudo chmod 400 /storage/munge.key
 ```
 
 ## Install munge on worker nodes:
-```
+```bash
 sudo apt-get install libmunge-dev libmunge2 munge
 sudo cp /storage/munge.key /etc/munge/munge.key
 sudo systemctl enable munge
@@ -328,20 +327,20 @@ First we want to clone the repo:
 `git clone https://github.com/mknoxnv/ubuntu-slurm.git`
 
 Install prereqs:
-```
+```bash
 sudo apt-get install git gcc make ruby ruby-dev libpam0g-dev libmariadb-client-lgpl-dev libmysqlclient-dev mariadb-server build-essential libssl-dev -y
 sudo gem install fpm
 ```
 
 Next we set up MariaDB for storing SLURM data:
-```
+```bash
 sudo systemctl enable mysql
 sudo systemctl start mysql
 sudo mysql -u root
 ```
 
 Within mysql:
-```
+```sql
 create database slurm_acct_db;
 create user 'slurm'@'localhost';
 set password for 'slurm'@'localhost' = password('slurmdbpass');
@@ -364,7 +363,7 @@ It’s best to check the downloads page and use the latest version (right click 
 
 You can use the -j option to specify the number of CPU cores to use for 'make', like `make -j12`.  `htop` is a nice package that will show usage stats and quickly show how many cores you have.
 
-```
+```bash
 cd /storage
 wget https://download.schedmd.com/slurm/slurm-19.05.2.tar.bz2
 tar xvjf slurm-19.05.2.tar.bz2
@@ -377,19 +376,19 @@ cd ..
 ```
 
 ### Install SLURM
-```
+```bash
 sudo fpm -s dir -t deb -v 1.0 -n slurm-19.05.2 --prefix=/usr -C /tmp/slurm-build .
 sudo dpkg -i slurm-19.05.2_1.0_amd64.deb
 ```
 
 Make all the directories we need:
-```
+```bash
 sudo mkdir -p /etc/slurm /etc/slurm/prolog.d /etc/slurm/epilog.d /var/spool/slurm/ctld /var/spool/slurm/d /var/log/slurm
 sudo chown slurm /var/spool/slurm/ctld /var/spool/slurm/d /var/log/slurm
 ```
 
 Copy slurm control and db services:
-```
+```bash
 sudo cp /storage/ubuntu-slurm/slurmdbd.service /etc/systemd/system/
 sudo cp /storage/ubuntu-slurm/slurmctld.service /etc/systemd/system/
 ```
@@ -398,7 +397,7 @@ The slurmdbd.conf file should be copied before starting the slurm services:
 `sudo cp /storage/slurmdbd.conf /etc/slurm/`
 
 Start the slurm services:
-```
+```bash
 sudo systemctl daemon-reload
 sudo systemctl enable slurmdbd
 sudo systemctl start slurmdbd
@@ -408,7 +407,7 @@ sudo systemctl start slurmctld
 
 If the master is also going to be a worker/compute node, you should do:
 
-```
+```bash
 sudo cp /storage/ubuntu-slurm/slurmd.service /etc/systemd/system/
 sudo systemctl enable slurmd
 sudo systemctl start slurmd
@@ -417,7 +416,7 @@ sudo systemctl start slurmd
 ## Worker nodes
 Now install SLURM on worker nodes:
 
-```
+```bash
 cd /storage
 sudo dpkg -i slurm-19.05.2_1.0_amd64.deb
 sudo cp /storage/ubuntu-slurm/slurmd.service /etc/systemd/system/
@@ -445,7 +444,7 @@ Take this line and put it at the bottom of `slurm.conf`.
 
 Next, setup the `gres.conf` file.  Lines in `gres.conf` should look like:
 
-```
+```bash
 NodeName=master Name=gpu File=/dev/nvidia0
 NodeName=master Name=gpu File=/dev/nvidia1
 ```
@@ -456,14 +455,14 @@ Gres has more options detailed in the docs: https://slurm.schedmd.com/slurm.conf
 
 Finally, we need to copy .conf files on **all** machines.  This includes the `slurm.conf` file, `gres.conf`, `cgroup.conf` , and `cgroup_allowed_devices_file.conf`.  Without these files it seems like things don’t work.
 
-```
+```bash
 sudo cp /storage/ubuntu-slurm/cgroup* /etc/slurm/
 sudo cp /storage/slurm.conf /etc/slurm/
 sudo cp /storage/gres.conf /etc/slurm/
 ```
 
 This directory should also be created on workers:
-```
+```bash
 sudo mkdir -p /var/spool/slurm/d
 sudo chown slurm /var/spool/slurm/d
 ```
@@ -473,7 +472,7 @@ After the conf files have been copied to all workers and the master node, you ma
 Workers:
 `sudo systemctl restart slurmd`
 Master:
-```
+```bash
 sudo systemctl restart slurmctld
 sudo systemctl restart slurmdbd
 sudo systemctl restart slurmd
@@ -487,7 +486,7 @@ Next we just create a cluster:
 
 I think cgroups allows memory limitations from SLURM jobs and users to be implemented.  Set memory cgroups on all workers with:
 
-```
+```bash
 sudo nano /etc/default/grub
 And change the following variable to:
 GRUB_CMDLINE_LINUX="cgroup_enable=memory swapaccount=1"
@@ -525,7 +524,7 @@ This sets the soft and hard limits to 150GB for /storage.
 
 
 To see how much of the quota people are using:
-```
+```bash
 sudo repquota -s /
 sudo repquota -s /storage
 ```
