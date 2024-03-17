@@ -504,7 +504,7 @@ Adding users can be done with Linux tools and SLURM commands.  It’s best to cr
 
 `sudo groupadd normal`
 
-[Here is an example script](create_users.sh) to add users from a csv file.  There is also a [script for deleting users](https://github.com/ReverseSage/Slurm-ubuntu-20.04.1/blob/master/delete_users.sh).
+[Here is an example script](https://raw.githubusercontent.com/ReverseSage/Slurm-ubuntu-20.04.1/master/create_users.sh) to add users from a csv file.  There is also a [script for deleting users](https://raw.githubusercontent.com/ReverseSage/Slurm-ubuntu-20.04.1/master/delete_users.sh).
 
 We are adding users within the FreeIPA system, within the SLURM system, and creating a home directory.  The user is set to expire a little over a year from creation, and the password is set to expire upon the first login (prompting the user to change their password).
 
@@ -536,7 +536,7 @@ The new users don’t seem to always show up until they have saved something on 
 
 
 ## Deleting SLURM users on expiration
-The slurm account manager has no way to set an expiration for users.  So we use [this script](https://github.com/ReverseSage/Slurm-ubuntu-20.04.1/blob/master/check_if_user_expired.sh) to check if the Linux username has expired, and if so, we delete the slurm username and home directory.  This runs on a cronjob once per day.  At it to the crontab file with:
+The slurm account manager has no way to set an expiration for users.  So we use [this script](https://raw.githubusercontent.com/ReverseSage/Slurm-ubuntu-20.04.1/master/check_if_user_expired.sh) to check if the Linux username has expired, and if so, we delete the slurm username and home directory.  This runs on a cronjob once per day.  At it to the crontab file with:
 
 `sudo crontab -e`
 
