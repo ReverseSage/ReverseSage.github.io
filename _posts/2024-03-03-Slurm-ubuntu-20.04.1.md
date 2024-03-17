@@ -1,5 +1,4 @@
 ---
-layout: post
 title: "slurm on ubuntu (20.04.1)"
 permalink: "slurm"
 categories: [HPC]
