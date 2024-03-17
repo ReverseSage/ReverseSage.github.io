@@ -24,8 +24,8 @@ concurrency:
 
 jobs:
   build:
-    runs-on: self-hosted
-#    runs-on: ubuntu 22.04.4
+#    runs-on: self-hosted
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
