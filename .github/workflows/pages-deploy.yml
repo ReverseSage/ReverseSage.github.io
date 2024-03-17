@@ -24,7 +24,7 @@ concurrency:
 
 jobs:
   build:
-     runs-on: self-hosted
+    runs-on: self-hosted
 #    runs-on: ubuntu 22.04.4
 
     steps:
