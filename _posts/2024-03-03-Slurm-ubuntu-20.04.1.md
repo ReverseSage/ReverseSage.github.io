@@ -10,10 +10,10 @@ Instructions for setting up a SLURM cluster using Ubuntu 20.04.1 with GPUs.  Go 
 OS used: Ubuntu 20.04.1 LTS
 
 
-# Overview
+## Overview
 This guide will help you create and install a CPU/GPU HPC cluster with a job queue and user management.  The idea is to have a GPU cluster which allows use of a few GPUs by many people.  Using multiple GPUs at once is not the point here, and hasn't been tested.  This guide demonstrates how to create a GPU cluster for neural networks (deep learning) which uses Python and related neural network libraries (Tensorflow, Keras, Pytorch), CUDA, and NVIDIA GPU cards.  You can expect this to take you a few days up to a week.
 
-## Outline of steps:
+### Outline of steps:
 
 - Prepare hardware
 - Install OSs
@@ -24,15 +24,15 @@ This guide will help you create and install a CPU/GPU HPC cluster with a job que
 - Install/configure file sharing (NFS here; if using more than one node/computer in the cluster)
 - Install munge/SLURM and configure
 
-## Acknowledgements
+### Acknowledgements
 This wouldn't have been possible without this [github repo](https://github.com/mknoxnv/ubuntu-slurm) from mknoxnv.  I don't know who that person is, but they saved me weeks of work trying to figure out all the conf files and services, etc.
 
-## Upcoming labels
+### Upcoming labels
 - master      = this section will apply on master node only.
 - node        = this section will apply on slave node only.
 - master-node = this section will apply on both master and slave.
 
-# Preparing Hardware
+## Preparing Hardware
 
 If you do not already have hardware, here are some considerations:
 
@@ -44,7 +44,7 @@ Power supply wattage is also important to consider, as GPUs can take a lot of Wa
 
 You only need one computer, but to have more than 4 GPUs you will need at least 2 computers.  This guide assumes you are using more than one computer in your cluster.
 
-# Installing operating systems
+## Installing operating systems
 
 Once you have hardware up and running, you need to install an OS.  From my research I've found Ubuntu is the top Linux distribution as of 2019 (both for commodity hardware and servers), and is recommended.  Currently the latest long-term stability version is Ubuntu 18.04.3, which is what was used here.  LTS are usually better because they are more stable over time.  Other Linux distributions may differ in some of the commands.
 
@@ -54,7 +54,7 @@ I recommend using [LVM](https://www.howtogeek.com/211937/how-to-use-lvm-on-ubunt
 
 **Note**: Along the way I used the package manager to update/upgade software many times (`sudo apt-get update` and `sudo apt-get upgrade`) followed by reboots.  If something is not working, this can be a first step to try to debug it.
 
-## Cluster time synchronization
+### Cluster time synchronization
 first you need to make sure to disable the firewall (ufw) that will save you a lot of headache.  
 
 **(master-node)**  
@@ -79,7 +79,7 @@ you need `ntp` package
   sudo /etc/init.d/ntp restart
   ```
 **(node)**
-## Synchronizing GID/UIDs
+### Synchronizing GID/UIDs
 It's recommend to sync the GIDs and UIDs across machines.  This can be done with something like LDAP (install instructions [here](https://computingforgeeks.com/how-to-install-and-configure-openldap-ubuntu-18-04/) and [here](https://www.techrepublic.com/article/how-to-install-openldap-on-ubuntu-18-04/)).  In my experience, for basic cluster management where all users can read and write to the folders where job files exist, the only GIDs and UIDs that need to be synced are the slurm and munge users.  Other users can be created and run SLURM jobs without having usernames on the other machines in the cluster.
 
 However, if you want to isolate access to users' home folders (best practice I'd say), then you must synchronize users across the cluster.  The easiest way I've found to synchronize UIDs and GIDs across an Ubuntu cluster is FreeIPA.  Here are installation instructions:
@@ -89,14 +89,14 @@ However, if you want to isolate access to users' home folders (best practice I'd
 
 It is important that you set the hostname to a FQDN, otherwise kerberos/FreeIPA won't work.  If you accidentally set the hostname during the kerberos setup to the wrong thing, you can change it in `/etc/krb5.conf`.  You could also completely purge kerberos [like so](https://serverfault.com/a/885525/305991).  If you need to reconfigure the ipa configuration, you can do `sudo ipa-server-install --uninstall` then try installing again.  I had to do the uninstall twice for it to work.
 
-## Synchronizing time
+### Synchronizing time
 Free-IPA should take care of syncing time, so you shouldn't have to worry about this if you setup freeipa.  You can see if times are synced with the `date` command on the various machines.
 
 
 It's not a bad idea to sync the time across the servers.  [Here's how](https://knowm.org/how-to-synchronize-time-across-a-linux-cluster/).  One time when I set it up, it was ok, but another time the slurmctld service wouldn't start and it was because the times weren't synced.
 
 
-## Set up munge and slurm users and groups
+### Set up munge and slurm users and groups
 Immediately after installing OS’s, you want to create the munge and slurm users and groups on all machines.  The GID and UID (group and user IDs) must match for munge and slurm across all machines.  If you have a lot of machines, you can use the parallel SSH utilities mentioned before.  There are also other options like NIS and NISplus.  One other option is to use FreeIPA to create users and groups.
 
 On all machines we need the munge authentication service and slurm installed.  First, we want to have the munge and slurm users/groups with the same UIDs and GIDs.  In my experience, these are the only GID and UIDs that need synchronization for the cluster to work.  On all machines:
@@ -121,12 +121,12 @@ The numbers don’t matter as long as they are available for the user and group 
 
 
 
-## Installing software/drivers
+### Installing software/drivers
 Next you should install SSH.  Open a terminal and install: `sudo apt install openssh-server -y`.
 
 Once you have SSH on the machines, you may want to use a [parallel SSH utility](https://www.tecmint.com/run-commands-on-multiple-linux-servers/) to execute commands on all machines at once.
 
-### Install NVIDIA drivers
+#### Install NVIDIA drivers
 You will need the latest NVIDIA drivers install for their cards.  The procedure [currently is](http://ubuntuhandbook.org/index.php/2019/04/nvidia-430-09-gtx-1650-support/):
 
 ```bash
@@ -146,7 +146,7 @@ But that still didn't seem to solve the issue, and I installed it via the "Softw
 
 We also use [NoMachine](https://www.nomachine.com/) for remote GUI access.
 
-## Install the Anaconda Python distribution.
+### Install the Anaconda Python distribution.
 Anaconda makes installing deep learning libraries easier, and doesn’t require installing CUDA/CuDNN libraries (which is a pain).  Anaconda handles the CUDA and other dependencies for deep learning libraries.
 
 Download the distribution file:
@@ -208,12 +208,12 @@ Python3.6 is the latest version with easy support for tensorflow and some other 
 At this point you can use this code to test GPU functionality with this [demo code](https://raw.githubusercontent.com/keras-team/keras/master/examples/mnist_cnn.py), you could also use [this](https://stackoverflow.com/a/38580201/4549682).
 
 
-# Install NFS (shared storage)
+## Install NFS (shared storage)
 In order for SLURM to work properly, there must be a storage location present on all computers in the cluster with the same files used for jobs.  All computers in the cluster must be able to read and write to this directory.  One way to do this is with NFS, although other options such as OCFS2 exist.  Here we use NFS.
 
 For the instructions, we will call the primary server `master` (the one hosting storage and the SLURM controller) and assume we have one worker node (another computer with GPUs) called `worker`.  We will also assume the username/groupname for the main administrative account on all machines is `admin:admin`.  I used the same username and group for the administrative accounts on all the servers.
 
-## Master node
+### Master node
 On the master server, do:
 
 `sudo apt install nfs-kernel-server -y`
@@ -255,7 +255,7 @@ You should also add a rule to allow for NFS traffic from the workers through por
 Check the status with `sudo ufw status`.  You should see a rule to allow traffic to port 2049 from your worker nodes' IP addresses. [Here's more info](https://www.digitalocean.com/community/tutorials/how-to-set-up-an-nfs-mount-on-ubuntu-16-04).
 
 
-## Client nodes
+### Client nodes
 Now we can set up the clients.  On all worker servers:
 
 ```bash
@@ -276,8 +276,8 @@ This can be done like so:
 Now any files put into /storage from the master server can be seen on all worker servers connect via NFS.  The worker servers MUST be read and write.  If not, any sbatch jobs will give an exit status of 1:0.
 
 
-# Preparing for SLURM installation
-## Passwordless SSH from master to all workers
+## Preparing for SLURM installation
+### Passwordless SSH from master to all workers
 
 First we need passwordless SSH between the master and compute nodes.  We are still using `master` as the master node hostname and `worker` as the worker hostname.  On the master:
 
@@ -288,7 +288,7 @@ ssh-copy-id admin@worker
 
 To do this with many worker nodes, you might want to set up a small script to loop through worker hostnames or IPs.
 
-## Install munge on the master:
+### Install munge on the master:
 ```bash
 sudo apt-get install libmunge-dev libmunge2 munge -y
 sudo systemctl enable munge
@@ -306,7 +306,7 @@ sudo chown munge /storage/munge.key
 sudo chmod 400 /storage/munge.key
 ```
 
-## Install munge on worker nodes:
+### Install munge on worker nodes:
 ```bash
 sudo apt-get install libmunge-dev libmunge2 munge
 sudo cp /storage/munge.key /etc/munge/munge.key
@@ -317,7 +317,7 @@ sudo systemctl start munge
 If you want, you can test munge:
 `munge -n | unmunge | grep STATUS`
 
-## Prepare DB for SLURM
+### Prepare DB for SLURM
 
 These instructions more or less follow this github repo: https://github.com/mknoxnv/ubuntu-slurm
 
@@ -354,10 +354,10 @@ Copy the default db config file:
 
 Ideally you want to change the password to something different than `slurmdbpass`.  This must also be set in the config file `/storage/slurmdbd.conf`.
 
-# Install SLURM
-## Download and install SLURM on Master
+## Install SLURM
+### Download and install SLURM on Master
 
-### Build the SLURM .deb install file
+#### Build the SLURM .deb install file
 It’s best to check the downloads page and use the latest version (right click link for download and use in the wget command).  Ideally we’d have a script to scrape the latest version and use that dynamically.
 
 You can use the -j option to specify the number of CPU cores to use for 'make', like `make -j12`.  `htop` is a nice package that will show usage stats and quickly show how many cores you have.
@@ -374,7 +374,7 @@ make install
 cd ..
 ```
 
-### Install SLURM
+#### Install SLURM
 ```bash
 sudo fpm -s dir -t deb -v 1.0 -n slurm-19.05.2 --prefix=/usr -C /tmp/slurm-build .
 sudo dpkg -i slurm-19.05.2_1.0_amd64.deb
@@ -412,7 +412,7 @@ sudo systemctl enable slurmd
 sudo systemctl start slurmd
 ```
 
-## Worker nodes
+### Worker nodes
 Now install SLURM on worker nodes:
 
 ```bash
@@ -423,7 +423,7 @@ sudo systemctl enable slurmd
 sudo systemctl start slurmd
 ```
 
-## Configuring SLURM
+### Configuring SLURM
 
 Next we need to set up the configuration file.  Copy the default config from the github repo:
 
@@ -481,7 +481,7 @@ Next we just create a cluster:
 `sudo sacctmgr add cluster compute-cluster`
 
 
-## Configure cgroups
+### Configure cgroups
 
 I think cgroups allows memory limitations from SLURM jobs and users to be implemented.  Set memory cgroups on all workers with:
 
@@ -495,8 +495,8 @@ Finally at the end, I did one last `sudo apt update`, `sudo apt upgrade`, and `s
 `sudo reboot`
 
 
-# User Management
-## Adding users
+## User Management
+### Adding users
 
 Adding users can be done with Linux tools and SLURM commands.  It’s best to create a group for different user groups:
 
@@ -507,7 +507,7 @@ Adding users can be done with Linux tools and SLURM commands.  It’s best to cr
 We are adding users within the FreeIPA system, within the SLURM system, and creating a home directory.  The user is set to expire a little over a year from creation, and the password is set to expire upon the first login (prompting the user to change their password).
 
 
-## Storage quotas
+### Storage quotas
 Next we need to set storage quotas for the user.  Follow [this guide](https://www.digitalocean.com/community/tutorials/how-to-set-filesystem-quotas-on-ubuntu-18-04) to set up the quota settings on the machine.
 
 Then we can set quotas:
@@ -533,7 +533,7 @@ The new users don’t seem to always show up until they have saved something on 
 `sudo quota -vs ngeorge`
 
 
-## Deleting SLURM users on expiration
+### Deleting SLURM users on expiration
 The slurm account manager has no way to set an expiration for users.  So we use [this script](https://raw.githubusercontent.com/ReverseSage/Slurm-ubuntu-20.04.1/master/check_if_user_expired.sh) to check if the Linux username has expired, and if so, we delete the slurm username and home directory.  This runs on a cronjob once per day.  At it to the crontab file with:
 
 `sudo crontab -e`
@@ -544,12 +544,12 @@ Add this line to run at 5 am every day on the machine:
 `
 Obviously fix the path to where the script is, and change the username to yours.
 
-# Troubleshooting
+## Troubleshooting
 
-## Log files
+### Log files
 When in doubt, you can check the log files.  The locations are set in the slurm.conf file, and are `/var/log/slurmd.log` and `/var/log/slurmctld.log` by default.  Open them with `sudo nano /var/log/slurmctld.log`.  To go to the bottom of the file, use ctrl+_ and ctrl+v.  I also changed the log paths to `/var/log/slurm/slurmd.log` and so on, and changed the permissions of the folder to be owner by slurm: `sudo chown slurm:slurm /var/log/slurm`.
 
-## Checking SLURM states
+### Checking SLURM states
 Some helpful commands:
 
 `scontrol ping` -- this checks if the controller node can be reached.  If this isn't working (i.e. the command returns 'DOWN' and not 'UP'), you might need to allow connections to the slurmctrlport (in the slurm.conf file).  This is set to 6817 in the config file.  To allow connections with the firewall, execute:
@@ -560,7 +560,7 @@ and
 
 `sudo ufw reload`
 
-## Error codes 1:0 and 2:0
+### Error codes 1:0 and 2:0
 If trying to run a job with `sbatch` and the exit code is 1:0, this is usually a file writing error.  The first thing to check is that your output and error file paths in the .job file are correct.  Also check the .py file you want to run has the correct filepath in your .job file.  Then you should go to the logs (`/var/log/slurm/slurmctld.log`) and see which node the job was trying to run on.  Then go to that node and open the logs (`/var/log/slurm/slurmd.log`) to see what it says.  It may say something about the path for the output/error files, or the path to the .py file is incorrect.
 
 It could also mean your common storage location is not r/w accessible to all nodes.  In the logs, this would show up as something about permissions and unable to write to the filesystem.  Double-check that you can create files on the /storage location on all workers with something like `touch testing.txt`.  If you can't create a file from the worker nodes, you probably have some sort of NFS issue.  Go back to the NFS section and make sure everything looks ok.  You should be able to create directories/files in /storage from any node with the admin account and they should show up as owned by the admin user.  If not, you may have some issue in your /etc/exports or with your GID/UIDs not matching.
@@ -572,27 +572,27 @@ If some workers are 'draining', down, or unavailable, you might try:
 `sudo scontrol update NodeName=worker1 State=RESUME`
 
 
-## Node is stuck draining (drng from `sinfo`)
+### Node is stuck draining (drng from `sinfo`)
 This has happened due to the memory size in slurm.conf being higher than actual memor size.  Double check the memory from `free -m` or `sudo slurmd -C` and update slurm.conf on all machines in the cluster.  Then run `sudo scontrol update NodeName=worker1 State=RESUME`
 
-## Nodes are not visible upon restart
+### Nodes are not visible upon restart
 After restarting the master node, sometimes the workers aren't there. I've found I often have to do `sudo scontrol update NodeName=worker1 State=RESUME` to get them working/available.
 
 
-## Taking a node offline
+### Taking a node offline
 The best way to take a node offline for maintenance is to drain it:
 `sudo scontrol update NodeName=worker1 State=DRAIN Reason='Maintenance'`
 
 Users can see the reason with `sinfo -R`
 
 
-## Testing GPU load
+### Testing GPU load
 Using `watch -n 0.1 nvidia-smi` will show the GPU load in real-time.  You can use this to monitor jobs as they are scheduled to make sure all the GPUs are being utilized.
 
 
 
 
-## Setting account options
+### Setting account options
 You may want to limit jobs or submissions.  Here is how to set attributes (-1 means no limit):
 ```bash
 sudo sacctmgr modify account students set GrpJobs=-1
@@ -601,7 +601,7 @@ sudo sacctmgr modify account students set MaxJobs=-1
 sudo sacctmgr modify account students set MaxSubmitJobs=-1
 ```
 
-## FreeIPA Troubleshooting
+### FreeIPA Troubleshooting
 
 If you can't access the FreeIPA admin web GUI, you may try changing permissions on the Kerberos folder as noted [here](https://scattered.network/2019/04/09/freeipa-webui-login-fails-with-login-failed-due-to-an-unknown-reason/).
 
@@ -615,17 +615,17 @@ the [resolv.conf file on the clients](http://clusterfrak.com/sysops/app_installs
 add several instances "sss" to [other lines in this file](https://bugzilla.redhat.com/show_bug.cgi?id=1366569)
 
 
-# Better sacct
+## Better sacct
 
 `sacct --format=jobid,jobname,state,exitcode,user,account`
 
 More on sacct [here](https://slurm.schedmd.com/sacct.html).
 
 
-# Changing IPs
+## Changing IPs
 If the IP addresses of your machines change, you will need to update these in the file `/etc/hosts` on all machines and `/etc/exports` on the master node.  It's best to restart after making these changes.
 
-# NFS directory not showing up
+## NFS directory not showing up
 Check the service is running on the master node:
 `sudo systemctl status nfs-kernel-server.service`
 
@@ -645,10 +645,10 @@ If this works, you might have an issue with ports being blocked or other connect
 You should check your firewall status with `sudo ufw status`.  You should see a rule allowing port 2049 access from your worker nodes.  If you don't have it, be sure to add it with `sudo ufw allow from <ip_addr> to any port nfs` then `sudo ufw reload`.  You should use the IP and not the hostname.  A reference for this is [here]().
 
 
-# Node not able to connect to slurmctld
+## Node not able to connect to slurmctld
 If a node isn't able to connnect to the controller (server/master), first check that time is properly synced.  Try using the `date` command to see if the times are synced across the servers.
 
-# Unable to uninstall and reinstall freeipa client
+## Unable to uninstall and reinstall freeipa client
 If you are trying to uninstall the freeipa client and reinstall it and it fails (e.g. gives an error `The ipa-client-install command failed. See /var/log/ipaclient-install.log for more information`), you can try installing it with:
 
 ```
@@ -666,7 +666,7 @@ You might also try removing this file instead:
 However, when I was having this problem, it appeared to be some issue with the LDAP and SSSD not working.  I ended up reformatting and reinstalling the OS on the problem machine instead of trying to debug SSSD which looked extremely time consuming.
 
 
-# Running a demo file
+## Running a demo file
 
 To test the cluster, it's useful to run some demo code.  Since Keras is within TensorFlow from version 2.0 onward, there are two demo files under the folder 'demo_files'.  tf1_test.py is for TensorFlow 1.x, and tf2_test.py is for TensorFlow 2.x.
 
