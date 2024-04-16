@@ -3,6 +3,7 @@ layout: post
 title: "Build your kubernetes cluster using K3S on linux"
 categories: [MLOPS]
 tags: ["cluster", "Kubernetes","K3S"]     # TAG names should always be lowercase
+# image: /assets/images/kubernetes.png
 ---
 
 
@@ -39,7 +40,7 @@ curl -sfL https://get.k3s.io | K3S_URL=https://<myserver>:6443 K3S_TOKEN=<mynode
 
 ## Uninstallation
 
-> [!warning]
+> :warning:
 > Uninstalling K3s deletes the local cluster data, configuration, and all of the scripts and CLI tools. It does not remove any data from external datastores, or created by pods using external Kubernetes storage volumes.
 
 If you installed K3s using the installation script, a script to uninstall K3s was generated during installation.
