@@ -4,8 +4,8 @@ title: "Build your kubernetes cluster using K3S on linux"
 categories: [MLOPS]
 tags: ["cluster", "Kubernetes","K3S"]     # TAG names should always be lowercase
 pin: true
-image: 
-  path: /assets/images/kubernetes.png
+#image: 
+#  path: /assets/images/kubernetes.png
 ---
 
 ![]({{ site.baseurl }}/assets/images/kubernetes.png
