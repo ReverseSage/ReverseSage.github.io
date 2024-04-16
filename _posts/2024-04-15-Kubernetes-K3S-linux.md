@@ -3,7 +3,9 @@ layout: post
 title: "Build your kubernetes cluster using K3S on linux"
 categories: [MLOPS]
 tags: ["cluster", "Kubernetes","K3S"]     # TAG names should always be lowercase
-image: /assets/images/kubernetes.png
+image: 
+  path: /assets/images/kubernetes.png
+  alt: Kubernetes cluster image.
 ---
 
 
