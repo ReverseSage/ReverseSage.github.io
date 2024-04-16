@@ -3,11 +3,12 @@ layout: post
 title: "Build your kubernetes cluster using K3S on linux"
 categories: [MLOPS]
 tags: ["cluster", "Kubernetes","K3S"]     # TAG names should always be lowercase
+pin: true
 image: 
   path: /assets/images/kubernetes.png
-  alt: Kubernetes cluster image.
 ---
 
+![]({{ site.baseurl }}/assets/images/kubernetes.png
 
 ## Naming convention
 
