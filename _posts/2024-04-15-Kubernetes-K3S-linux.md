@@ -29,7 +29,7 @@ curl -sfL https://get.k3s.io | sh -
 if you want to install agents (of course, otherwise it won't be a cluster :) ) you will need to get your join token, just run the following command on your **server**:
 
 ```bash
-sudo /var/lib/rancher/k3s/server/node-token
+sudo cat /var/lib/rancher/k3s/server/node-token
 ```
 
 and to install node as an **agent** you can run 
